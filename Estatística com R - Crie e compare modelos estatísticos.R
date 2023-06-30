@@ -222,4 +222,12 @@ anova(modelocompleto,modeloincompleto3) # p-valor = 0.39
 
 # A variável não significativa que poderá ser removida do modelo é densidade
 
+#---------------------------------------------------------
 
+# Conclusão
+
+# O que afeta a qualidade do ar nas cidades?
+
+# As variáveis que afetaram foram: (a) o valor das empresas e (b) a posição costeira
+# das cidades. Quanto maior o valor das empresas, pior a qualidado do ar. Além disso,
+# notamos que cidades costeiras apresentam uma melhor qualidade do ar.

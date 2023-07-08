@@ -1,5 +1,5 @@
 
-path <- "C:/users/beeat/OneDrive/Área de Trabalho/Estatística com R/Data_Science/googleplaystore.csv"
+path <- "C:/users/beeat/OneDrive/Área de Trabalho/Estatística com R/Data_Science/Arquivos/googleplaystore.csv"
 dados <- read.csv(file = path, stringsAsFactors = FALSE)
 
 library("tidyverse")
@@ -80,5 +80,95 @@ tabela_notas
 histograma_5bins <- ggplot(data = tabela_notas) + geom_histogram(mapping = aes(x = nota), bins = 5) 
 histograma_5bins #  "bins" é usado para controlar o número de intervalos em um histograma
 
-histograma_10breaks <- ggplot(data = tabela_notas) + geom_histogram(mapping = aes(x = nota), na.rm=TRUE, breaks = seq(0,10)) 
+histograma_10breaks <- ggplot(data = tabela_notas) + geom_histogram(mapping = aes(x = nota), na.rm=TRUE, breaks = seq(0,10,1)) 
 histograma_10breaks #"breaks" é usado para controlar os pontos de corte em uma curva de densidade.
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#                         Gráficos de barras
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Para plotar um gráfico de barras, basta usar:
+
+ggplot(data = dados) + geom_bar(mapping = aes(x = Category), stat = "count") + coord_flip() 
+
+# Stat: Na função de barras irá fazer uma contagem, agrupando por categorias
+# Coord_flip: Troca os eixos (x <-> y)
+
+###############
+# Ordenar os dados no gráfico
+
+# Criaremos um data frame com a frequência
+categoryfreq <- data.frame(table(dados$Category))
+
+# Utilizamos a função "reorder" para ordenar de acordo com a tabela criada anteriormente
+ggplot(data = categoryfreq) + geom_bar(mapping = aes(x = reorder(Var1,Freq), y=Freq), stat = "identity") + coord_flip()
+
+# reorder(Var1,Freq): Se desejar deixar em ordem crescente, basta colocar -Freq 
+
+###############
+# Selecionar os top 10
+
+category.top10 <- categoryfreq[(order(-categoryfreq$Freq)),]
+category.top10 <- category.top10[1:10,]
+
+###############
+# Sujeiras em nossa base de dados
+
+# Em alguns casos, temos informações irrelevante ou erradas em nossa base de dados. 
+# Se o volume for baixo, podemos simplesmente retirá-la.
+
+dados_2 <- dados %>%  dplyr::filter(Category != "1.9")
+
+
+###############
+# Campos vazios
+
+# Quando temos campos vazios, não conseguimos utilizar a função min e max, como mostrado abaixo:
+min(dados_2$Rating)
+max(dados_2$Rating)
+
+# Para sabermos o volume de campos vazios neste campo da base fazemos:
+dados_2 %>% filter(is.na(Rating)) %>% count() # Seleciona todos os dados que tem NA
+summary(dados_2$Rating) 
+
+# Para corrigir esta ausência de dados, podemos recorrer a métodos estatísticos ou a origem dos dados
+# Neste caso, utilizamos a média para corrigir as informações faltantes
+
+dados_2 %>% filter(is.na(Rating)) %>% group_by(Category) %>%  count() #%>% 
+            #summarise(media = mean(Rating)) 
+
+# Calcula a média em cada categoria
+mean.category <- dados_2 %>% filter(!is.na(Rating)) %>% group_by(Category) %>%
+  summarise(media = mean(Rating)) 
+
+# Vamos criar um laço para substituir as médias de cada categoria na base dados_2
+for (i in 1:nrow(dados_2)){
+  if(is.na(dados_2[i,"Rating"])){
+    dados_2[i,"newRating"] <- mean.category[mean.category$Category == dados_2[i,"Category"],"media"]
+  }else{
+    dados_2[i,"newRating"] <- dados_2[i,"Rating"]
+  }}
+
+# Problema resolvido! Não há campos vazios na coluna newRating
+summary(dados_2$newRating)
+min(dados_2$newRating)
+max(dados_2$newRating)
+
+# A função if_else executa a primeira condição se for verdadeira, caso contrário executa o segundo comando
+if_else(1 > 1, "verdade", "falso") 
+
+dados_2 <- dados_2 %>% mutate(rating_class = if_else(newRating < 2, "ruim", 
+                                          if_else(newRating > 4, "boa", "regular"))) 
+
+ggplot(dados_2) + geom_bar(mapping = aes(x = rating_class), stat = "count")
+
+
+
+
+
+
+
+
+
+
